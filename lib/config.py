@@ -18,10 +18,20 @@ required_tokens = {
 }
 missing = [name for name, val in required_tokens.items() if not val]
 if missing:
-    print(f"[ERROR] 以下の環境変数が設定されていません: {', '.join(missing)}")
+    print(f"[ERROR] The following environment variables are not set: {', '.join(missing)}")
     sys.exit(1)
 
-WRIKE_FOLDERS = {
-    "個人タスク": "IEACB2Q5I5MZG3E4",
-    "pc20.4(EOL対応等改善)": "IEACB2Q5I5SOYQK2",
-}
+WRIKE_FOLDERS = {}
+folders_str = os.getenv("WRIKE_FOLDERS", "")
+if folders_str:
+    for pair in folders_str.split(","):
+        name, folder_id = pair.split(":")
+        WRIKE_FOLDERS[name] = folder_id
+
+FACILITATORS = [
+    name.strip()
+    for name in os.getenv("FACILITATORS", "").split(",")
+    if name.strip()
+]
+
+FACILITATOR_CHANNEL_ID = os.getenv("FACILITATOR_CHANNEL_ID")

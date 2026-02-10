@@ -3,26 +3,29 @@ import re
 import time
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_sdk import WebClient
+
 from lib.config import (
     SLACK_BOT_TOKEN,
     SLACK_APP_TOKEN,
-    WRIKE_FOLDERS
+    WRIKE_FOLDERS,
 )
 from lib.wrike_api import get_all_tasks, create_task_in_wrike
-from lib.openai_client import generate_response
 from lib.home_tab import update_home_tab
 from services.delete_bot_message import delete_bot_message
-
 from services.token_check import (
     check_slack_token,
     check_wrike_token,
-    check_openai_token
 )
+from services.facilitator_daily import start_facilitator_scheduler
 
 app = App(token=SLACK_BOT_TOKEN)
-
-# --- Bot ID 取得（メンション判定・除去用） ---
 BOT_ID = app.client.auth_test()["user_id"]
+client = WebClient(token=SLACK_BOT_TOKEN)
+
+# 定時ファシリテーター通知
+start_facilitator_scheduler(app)
+
 
 # Home タブ
 @app.event("app_home_opened")
@@ -40,51 +43,21 @@ def refresh_home(ack, body, client):
 
     slack_ok = check_slack_token(client)
     wrike_ok = check_wrike_token()
-    openai_ok = check_openai_token()
 
     status_text = (
         f"*Slack*: {'○' if slack_ok else '✖︎'}  "
-        f"*Wrike*: {'○' if wrike_ok else '✖︎'}  "
-        f"*OpenAI*: {'○' if openai_ok else '✖︎'}"
+        f"*Wrike*: {'○' if wrike_ok else '✖︎'}"
     )
 
     update_home_tab(client, user_id, status_text=status_text)
 
-# チャンネルでのメンション対応
-@app.event("app_mention")
-def handle_mention(event, say):
-    user_text = re.sub(f"<@{BOT_ID}>", "", event.get("text", "")).strip()
-    if not user_text:
-        return
-    tasks = get_all_tasks()
-    ai_answer = generate_response(tasks, user_text)
-    say(ai_answer)
 
-
-# DM対応
-def handle_dm_message(event, say):
-    if event.get("subtype") in ["bot_message", "message_deleted"]:
-        return
-    if event.get("channel_type") != "im":
-        return
-
-    user_text = re.sub(f"<@{BOT_ID}>", "", event.get("text", "")).strip()
-    if not user_text:
-        return
-
-    tasks = get_all_tasks()
-    ai_answer = generate_response(tasks, user_text)
-    say(ai_answer)
-
-
-# DM内 Bot 発言削除コマンド
+# アプリ内 Bot 発言削除コマンド
 @app.command("/delete_dm")
 def delete_dm_command(ack, body, client):
     ack()
-
     channel_id = body["channel_id"]
 
-    # 通知メッセージを残しておく
     notify = client.chat_postMessage(
         channel=channel_id,
         text="DM内のBot発言を削除しています…"
@@ -110,17 +83,16 @@ def delete_dm_command(ack, body, client):
         has_more = res.get("has_more", False)
         cursor = res.get("response_metadata", {}).get("next_cursor")
 
-    # 結果メッセージを送信
     result = client.chat_postMessage(
         channel=channel_id,
-        text=f"削除完了: {deleted_count} 件のメッセージを削除しました"
+        text=f"削除完了: {deleted_count-1} 件のメッセージを削除しました"
     )
-    time.sleep(3)
+    time.sleep(2)
     delete_bot_message(client, channel_id, result["ts"])
     delete_bot_message(client, channel_id, notify_ts)
 
 
-# スラッシュコマンド：タスク作成
+# /add_task
 @app.command("/add_task")
 def open_task_modal_command(ack, body, client):
     ack()
@@ -184,18 +156,17 @@ def open_task_modal_command(ack, body, client):
     )
 
 
-# モーダル送信処理
+
+# モーダル送信
 @app.view("submit_task_modal")
 def handle_task_modal_submission(ack, body, client):
     ack()
-
     values = body["view"]["state"]["values"]
 
     title = values["task_title_block"]["task_title_input"]["value"]
     description = values["task_desc_block"]["task_desc_input"]["value"]
     folder_id = values["folder_block"]["folder_select"]["selected_option"]["value"]
 
-    # ★ 追加：フォルダID → フォルダ名を逆引き
     folder_name = next(
         (name for name, fid in WRIKE_FOLDERS.items() if fid == folder_id),
         "不明なフォルダ"
@@ -213,12 +184,12 @@ def handle_task_modal_submission(ack, body, client):
     if created:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user} がタスク「{title}」を「{folder_name}」に作成しました "
+            text=f"{user} がタスク「{title}」を「{folder_name}」に作成しました。"
         )
     else:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user} のタスク作成に失敗しました ❌"
+            text=f"{user} のタスク作成に失敗しました。"
         )
 
 

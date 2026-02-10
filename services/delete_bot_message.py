@@ -7,5 +7,5 @@ def delete_bot_message(client, channel_id: str, ts: str) -> bool:
     except SlackApiError as e:
         # message_not_found の場合は無視
         if e.response["error"] != "message_not_found":
-            print(f"メッセージ削除エラー: {e.response['error']}")
+            print(f"Message deletion error: {e.response['error']}")
         return False

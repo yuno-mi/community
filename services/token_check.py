@@ -1,6 +1,5 @@
 from slack_sdk.errors import SlackApiError
-from openai import OpenAI, AuthenticationError, APIError
-from tests.config import WRIKE_API_TOKEN, OPENAI_API_KEY
+from lib.config import WRIKE_API_TOKEN
 import requests
 
 def check_slack_token(client) -> bool:
@@ -18,17 +17,5 @@ def check_wrike_token() -> bool:
             timeout=5
         )
         return res.status_code == 200
-    except Exception:
-        return False
-
-def check_openai_token() -> bool:
-    try:
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        client.models.list()
-        return True
-    except AuthenticationError:
-        return False
-    except APIError:
-        return False
     except Exception:
         return False

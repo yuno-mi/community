@@ -7,7 +7,7 @@ def build_home_blocks(status_text: str = "未確認") -> List[Dict]:
     """
     App Home 用の Block Kit を作成する
 
-    :param status_text: Wrike / MCP などの状態表示用テキスト
+    :param status_text: Slack / Wrike 状態表示用テキスト
     :return: blocks
     """
     blocks = [
