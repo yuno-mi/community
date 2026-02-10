@@ -2,6 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
 # CA証明書（必要な場合のみ）
 COPY certs/custom_cacerts.pem /usr/local/share/ca-certificates/custom_cacerts.crt
 RUN update-ca-certificates
@@ -15,8 +20,5 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # アプリ本体
 COPY . /app
-
-# ログが即時出るようにする
-ENV PYTHONUNBUFFERED=1
 
 CMD ["python", "slack_bot.py"]
