@@ -17,7 +17,7 @@ from services.token_check import (
     check_slack_token,
     check_wrike_token,
 )
-from services.facilitator_daily import start_facilitator_scheduler
+from services.facilitator_daily import start_facilitator_scheduler,register_facilitator_actions
 
 app = App(token=SLACK_BOT_TOKEN)
 BOT_ID = app.client.auth_test()["user_id"]
@@ -25,6 +25,9 @@ client = WebClient(token=SLACK_BOT_TOKEN)
 
 # 定時ファシリテーター通知
 start_facilitator_scheduler(app)
+
+# ファシリテーター承認 / パスのアクション登録
+register_facilitator_actions(app)
 
 
 # Home タブ
