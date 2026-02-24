@@ -208,7 +208,7 @@ def handle_task_modal_submission(ack, body, client):
 
 # 起動
 if __name__ == "__main__":
-    print("Starting Slack Bot...")
+    print("Starting Bot...")
     try:
         handler = SocketModeHandler(app, SLACK_APP_TOKEN)
         handler.start()
