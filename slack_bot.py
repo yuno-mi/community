@@ -17,7 +17,7 @@ from services.token_check import (
     check_slack_token,
     check_wrike_token,
 )
-from services.facilitator_daily import start_facilitator_scheduler
+from services.facilitator_daily import start_facilitator_scheduler,register_facilitator_actions
 
 app = App(token=SLACK_BOT_TOKEN)
 BOT_ID = app.client.auth_test()["user_id"]
@@ -25,6 +25,9 @@ client = WebClient(token=SLACK_BOT_TOKEN)
 
 # 定時ファシリテーター通知
 start_facilitator_scheduler(app)
+
+# ファシリテーター承認 / パスのアクション登録
+register_facilitator_actions(app)
 
 
 # Home タブ
@@ -179,26 +182,36 @@ def handle_task_modal_submission(ack, body, client):
     )
 
     channel_id = body["view"]["private_metadata"]
-    user = body["user"]["username"]
+
+    user_id = body["user"]["id"]
+
+    user_info = client.users_info(user=user_id)
+    profile = user_info["user"]["profile"]
+
+    user_name = (
+    profile.get("display_name")
+    or profile.get("real_name")
+    or body["user"]["username"]
+)
 
     if created:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user} がタスク「{title}」を「{folder_name}」に作成しました。"
+            text=f"{user_name} さんがタスク「{folder_name}」に「{title}」を作成しました。"
         )
     else:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user} のタスク作成に失敗しました。"
+            text=f"{user_name} さんのタスク作成に失敗しました。"
         )
 
 
 # 起動
 if __name__ == "__main__":
-    print("Slack Bot 起動中...")
+    print("Starting Bot...")
     try:
         handler = SocketModeHandler(app, SLACK_APP_TOKEN)
         handler.start()
     except Exception as e:
-        print(f"[ERROR] SocketMode 起動エラー: {e}")
+        print(f"[ERROR] SocketMode startup error: {e}")
         sys.exit(1)
