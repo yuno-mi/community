@@ -4,14 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WRIKE_API_TOKEN = os.getenv("WRIKE_API_TOKEN")
 WRIKE_FOLDER_ID = os.getenv("WRIKE_FOLDER_ID")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 
 required_tokens = {
-    "OPENAI_API_KEY": OPENAI_API_KEY,
     "WRIKE_API_TOKEN": WRIKE_API_TOKEN,
     "SLACK_BOT_TOKEN": SLACK_BOT_TOKEN,
     "SLACK_APP_TOKEN": SLACK_APP_TOKEN
