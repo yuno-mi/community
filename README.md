@@ -10,3 +10,12 @@ Slack 上で Wrike のタスクを作成し、
 
 - Slack 上で Wrike のタスクを作成
 - 指定した時刻に Slack へ自動通知を送信
+
+
+envファイルは以下を利用します。
+# Slack
+- SLACK_BOT_TOKEN  SLACK_APP_TOKEN
+# Wrike
+- WRIKE_API_TOKEN　WRIKE_FOLDER_ID（名前:ID のペア、カンマで区切る）
+# Facilitator
+- FACILITATOR_CHANNEL_ID FACILITATORS(ユーザidをカンマで区切る)
