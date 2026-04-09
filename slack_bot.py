@@ -11,7 +11,6 @@ from lib.config import (
     WRIKE_FOLDERS,
 )
 from lib.wrike_api import get_all_tasks, create_task_in_wrike
-from lib.home_tab import update_home_tab
 from services.delete_bot_message import delete_bot_message
 from services.token_check import (
     check_slack_token,
@@ -28,32 +27,6 @@ start_facilitator_scheduler(app)
 
 # ファシリテーター承認 / パスのアクション登録
 register_facilitator_actions(app)
-
-
-# Home タブ
-@app.event("app_home_opened")
-def handle_app_home_opened(event, client, logger):
-    user_id = event["user"]
-    logger.info(f"app_home_opened by {user_id}")
-    update_home_tab(client, user_id)
-
-@app.action("refresh_home")
-def refresh_home(ack, body, client):
-    ack()
-    user_id = body["user"]["id"]
-
-    update_home_tab(client, user_id, status_text="読み込み中…")
-
-    slack_ok = check_slack_token(client)
-    wrike_ok = check_wrike_token()
-
-    status_text = (
-        f"*Slack*: {'○' if slack_ok else '✖︎'}  "
-        f"*Wrike*: {'○' if wrike_ok else '✖︎'}"
-    )
-
-    update_home_tab(client, user_id, status_text=status_text)
-
 
 # アプリ内 Bot 発言削除コマンド
 @app.command("/delete_dm")
