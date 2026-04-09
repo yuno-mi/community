@@ -95,8 +95,8 @@ def delete_dm_command(ack, body, client):
     delete_bot_message(client, channel_id, notify_ts)
 
 
-# /add_task
-@app.command("/add_task")
+# /create_task
+@app.command("/create_task")
 def open_task_modal_command(ack, body, client):
     ack()
     trigger_id = body["trigger_id"]
@@ -197,12 +197,12 @@ def handle_task_modal_submission(ack, body, client):
     if created:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user_name} さんがタスク「{folder_name}」に「{title}」を作成しました。"
+            text=f"{user_name} さんが「{folder_name}」に「{title}」を作成しました。"
         )
     else:
         client.chat_postMessage(
             channel=channel_id,
-            text=f"{user_name} さんのタスク作成に失敗しました。"
+            text="タスク作成に失敗しました。"
         )
 
 
