@@ -48,6 +48,8 @@ def jst_to_utc_time(jst_hhmm: str) -> str:
 # -----------------------
 def start_facilitator_scheduler(app):
     def post_facilitator_message():
+        if datetime.now(JST).weekday() == 4:  # 金曜日
+            return
         state = load_state()
         queue = deque(state["queue"])
 
@@ -78,7 +80,7 @@ def start_facilitator_scheduler(app):
     def run_schedule():
         for jst_time in FACILITATOR_NOTIFY_TIMES:
             utc_time = jst_to_utc_time(jst_time)
-        schedule.every().day.at(utc_time).do(post_facilitator_message)
+            schedule.every().day.at(utc_time).do(post_facilitator_message)
 
         while True:
             schedule.run_pending()
