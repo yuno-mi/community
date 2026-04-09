@@ -10,10 +10,7 @@ from lib.config import FACILITATORS, FACILITATOR_CHANNEL_ID, FACILITATOR_NOTIFY_
 STATE_FILE = Path("data/facilitator_state.json")
 JST = timezone(timedelta(hours=9))
 
-
-# -----------------------
 # state管理
-# -----------------------
 def load_state():
     if not STATE_FILE.exists():
         return {"queue": list(FACILITATORS)}
@@ -33,9 +30,7 @@ def save_state(queue: list):
         json.dump({"queue": queue}, f, ensure_ascii=False)
 
 
-# -----------------------
 # JST → UTC 変換
-# -----------------------
 def jst_to_utc_time(jst_hhmm: str) -> str:
     h, m = map(int, jst_hhmm.split(":"))
     jst_dt = datetime.now(JST).replace(hour=h, minute=m, second=0, microsecond=0)
@@ -43,9 +38,7 @@ def jst_to_utc_time(jst_hhmm: str) -> str:
     return utc_dt.strftime("%H:%M")
 
 
-# -----------------------
 # スケジューラ起動
-# -----------------------
 def start_facilitator_scheduler(app):
     def post_facilitator_message():
         if datetime.now(JST).weekday() == 4:  # 金曜日
@@ -88,10 +81,7 @@ def start_facilitator_scheduler(app):
 
     threading.Thread(target=run_schedule, daemon=True).start()
 
-
-# -----------------------
 # Slack アクション
-# -----------------------
 def register_facilitator_actions(app):
     @app.action("facilitator_approve")
     def handle_facilitator_approve(ack, body):
