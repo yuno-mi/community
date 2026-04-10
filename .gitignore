@@ -3,3 +3,5 @@
 .devcontainer
 __pycache__/
 *.pyc
+*.pem
+facilitator_state.json

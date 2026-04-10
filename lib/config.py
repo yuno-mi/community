@@ -26,6 +26,20 @@ if folders_str:
         name, folder_id = pair.split(":")
         WRIKE_FOLDERS[name] = folder_id
 
+WRIKE_DYNAMIC_PARENTS = {
+    name: fid
+    for item in os.getenv("WRIKE_DYNAMIC_PARENTS", "").split(",")
+    if ":" in item
+    for name, fid in [item.split(":", 1)]
+}
+
+WRIKE_MEMBERS = {
+    name: mid
+    for item in os.getenv("WRIKE_MEMBERS", "").split(",")
+    if ":" in item
+    for name, mid in [item.split(":", 1)]
+}
+
 FACILITATORS = [
     name.strip()
     for name in os.getenv("FACILITATORS", "").split(",")
