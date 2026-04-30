@@ -21,4 +21,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # アプリ本体
 COPY . /app
 
-CMD ["python", "slack_bot.py"]
+CMD ["python", "main.py"]
