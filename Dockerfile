@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-# CA証明書（必要な場合のみ）
+# CA証明書（必要な場合）
 COPY certs/custom_cacerts.pem /usr/local/share/ca-certificates/custom_cacerts.crt
 RUN update-ca-certificates
 

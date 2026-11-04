@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from collections import deque
-from lib.config import FACILITATORS, FACILITATOR_CHANNEL_ID, FACILITATOR_NOTIFY_TIMES
+from lib.config import FACILITATORS, FACILITATOR_CHANNEL_ID, FACILITATOR_NOTIFY_TIME, PROGRESS_REPORT_TIME
 
 STATE_FILE = Path("data/facilitator_state.json")
 JST = timezone(timedelta(hours=9))
@@ -40,8 +40,16 @@ def jst_to_utc_time(jst_hhmm: str) -> str:
 
 # スケジューラ起動
 def start_facilitator_scheduler(app):
+    # 勤務状態（オンライン）かどうか判定
+    def is_active(user_id: str) -> bool:
+        try:
+            res = app.client.users_getPresence(user=user_id)
+            return res.get("presence") == "active"
+        except Exception:
+            return False
+
     def post_facilitator_message():
-        if datetime.now(JST).weekday() == 4:  # 金曜日
+        if datetime.now(JST).weekday() >= 5:
             return
         state = load_state()
         queue = deque(state["queue"])
@@ -63,17 +71,38 @@ def start_facilitator_scheduler(app):
                 {
                     "type": "actions",
                     "elements": [
-                        {"type": "button", "text": {"type": "plain_text", "text": "✅ 承認"}, "style": "primary", "action_id": "facilitator_approve", "value": str(user_id)},
-                        {"type": "button", "text": {"type": "plain_text", "text": "⏭ スキップ"}, "action_id": "facilitator_pass", "value": str(user_id)},
+                        {"type": "button", "text": {"type": "plain_text", "text": "承認"}, "style": "primary", "action_id": "facilitator_approve", "value": str(user_id)},
+                        {"type": "button", "text": {"type": "plain_text", "text": "スキップ"}, "action_id": "facilitator_pass", "value": str(user_id)},
                     ],
                 },
             ],
         )
 
+    def post_progress_report():
+        # 土(5)・日(6)はスキップ
+        if datetime.now(JST).weekday() >= 5:
+            return
+        if not FACILITATORS:
+            return
+
+        # 勤務状態（オンライン）の人のみ抽出
+        active_users = [uid for uid in FACILITATORS if is_active(uid)]
+        if not active_users:
+            return
+
+        mentions = " ".join(f"<@{uid}>" for uid in active_users)
+        app.client.chat_postMessage(
+            channel=FACILITATOR_CHANNEL_ID,
+            text=f"{mentions}\nリマインダー : 進捗を記載してください",
+        )
+
     def run_schedule():
-        for jst_time in FACILITATOR_NOTIFY_TIMES:
+        for jst_time in FACILITATOR_NOTIFY_TIME:
             utc_time = jst_to_utc_time(jst_time)
             schedule.every().day.at(utc_time).do(post_facilitator_message)
+
+        #進捗報告
+        schedule.every().day.at(jst_to_utc_time(PROGRESS_REPORT_TIME)).do(post_progress_report)
 
         while True:
             schedule.run_pending()
@@ -161,14 +190,14 @@ def register_facilitator_actions(app):
                         "elements": [
                             {
                                 "type": "button",
-                                "text": {"type": "plain_text", "text": "✅ 承認"},
+                                "text": {"type": "plain_text", "text": "承認"},
                                 "style": "primary",
                                 "action_id": "facilitator_approve",
                                 "value": str(next_user),
                             },
                             {
                                 "type": "button",
-                                "text": {"type": "plain_text", "text": "⏭ スキップ"},
+                                "text": {"type": "plain_text", "text": "スキップ"},
                                 "action_id": "facilitator_pass",
                                 "value": str(next_user),
                             },
