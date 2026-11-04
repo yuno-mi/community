@@ -1,7 +1,7 @@
 services:
   slack-bot:
     build: .
-    container_name: slack_bot
+    container_name: community
     restart: always
     env_file:
       - .env
